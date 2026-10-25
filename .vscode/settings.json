@@ -1,14 +1,22 @@
 {
+    
     "python.analysis.autoFormatStrings": true,
     "python.analysis.completeFunctionParens": true,
     "python.analysis.generateWithTypeAnnotation": true,
+    "python.analysis.extraPaths": ["${workspaceFolder}"],
     "autoDocstring.startOnNewLine": true,
-    "python.autoComplete.extraPaths": ["./MMAC-app"],
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.linting.pylintArgs": ["--disable=C0111", "--max-line-length=100"],
     "files.encoding": "utf8",
     "editor.encoding": "utf8",
-    "terminal.integrated.env.windows": { "PYTHONPATH": "${workspaceFolder}" }
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/."
+    ],
+    "cSpell.language": "en, ru-RU",
+    
 
 }

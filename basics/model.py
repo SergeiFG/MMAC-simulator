@@ -1,8 +1,34 @@
 from basics.parameter import Parameter, PathLike, path_to_str, path_to_list, Timer
 from basics.storage import StorageInterface
 
-from typing import List
+from typing import Any
 
+
+class _HistoryView:
+    """Доступ к сохранённым значениям через history.param и history['param']."""
+
+    __slots__ = ("_model",)
+
+    def __init__(self, model: "Model"):
+        object.__setattr__(self, "_model", model)
+
+    def __getitem__(self, name: str):
+        field = self._model.__dict__[name]
+        if isinstance(field, Model):
+            return field.history
+        if name == "time" and not isinstance(field, Parameter):
+            if self._model.storage is None:
+                raise ValueError("Storage is not set. Please set storage using set_storage method.")
+            return list(self._model.storage.read_time())
+        return self._model.read_history(name)
+
+    def __getattr__(self, name: str):
+        if name not in self._model.__dict__:
+            raise AttributeError(f"History has no parameter or model {name!r}")
+        return self[name]
+
+    def __setattr__(self, name, value):
+        raise AttributeError("History is read-only. Assign current values on the model instead.")
 
 
 class Model:
@@ -20,13 +46,13 @@ class Model:
     
     def __getitem__(self, key):
         """
-        Возврат значения. При обращении к Parameter возвращает его value
+        Возвращает сам Parameter для доступа к метаданным; текущее значение — model.param.
 
         Args:
             key (_type_): требуемое поле
 
         Returns:
-            _type_: value параметра, если он является экземпляром Parameter, иначе возвращает сам объект
+            _type_: объект поля; для time — текущее время таймера
         """
         if isinstance(self.__dict__[key], Parameter):
             return self.__dict__[key]
@@ -134,18 +160,45 @@ class Model:
             if isinstance(param, Model):
                 param.read_parameters()
                 
-    def read_history(self, param: Parameter) -> List[float]:
+    @property
+    def history(self) -> _HistoryView:
+        """История: model.history.param, model.history.time, model.history.child.param.
+
+        Каждый запрос возвращает свежий список из хранилища. Индексы и срезы
+        применяются как к обычному списку, например model.history.param[-5:].
         """
-        _summary_
+        return _HistoryView(self)
+
+    def read_history(
+        self,
+        param: str | Parameter,
+        start_step: int = None,
+        end_step: int = None,
+    ) -> list[Any]:
+        """
+        Читает сохранённую историю параметра по его собственному path.
 
         Args:
-            param (Parameter): Параметер, который необходимо считать историю
+            param: Локальное имя параметра или объект Parameter (model['param']).
+            start_step: Начало среза, включительно; None — с начала.
+            end_step: Конец среза, не включительно; None — до последней записи.
+                Отрицательные индексы отсчитываются с конца, как в списках Python.
 
         Returns:
-            List[float]: _description_
+            Список значений, включая текущий сохранённый шаг. Для параметра без
+            записей — пустой список. У входных параметров используется path,
+            а не read_path: это история самого параметра, а не его источника.
         """
-        
-        return None
+        if self.storage is None:
+            raise ValueError("Storage is not set. Please set storage using set_storage method.")
+        if isinstance(param, str):
+            param = self.__dict__[param]
+        if not isinstance(param, Parameter):
+            raise TypeError("Expected a parameter name or a Parameter object.")
+
+        path = path_to_str(param.path)
+        history, _ = self.storage.read_history([path], start_step, end_step)
+        return list(history.get(path, []))
                 
     def write_parameters(self):
         """

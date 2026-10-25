@@ -1,5 +1,6 @@
 from basics.parameter import PathLike, path_to_str, path_to_list, Timer
 from typing import Any, Tuple
+import pandas as pd
 
 class StorageInterface:
     """
@@ -34,12 +35,13 @@ class StorageInterface:
     
     def read_history(self, path: list[PathLike], start_step: int = None, end_step: int = None) -> tuple[dict[PathLike, list[Any]], list[float]]:
         """
-        Чтение истории значений параметров по пути или списку путей
+        Чтение истории значений параметров по списку путей.
+        Границы соответствуют срезу Python [start_step:end_step].
 
         Args:
-            path (PathLike | list[PathLike]): Путь или список путей к параметрам
-            start_step (int, optional): Начальный шаг для чтения истории. Defaults to None.
-            end_step (int, optional): Конечный шаг для чтения истории. Defaults to None.
+            path (list[PathLike]): Список путей к параметрам
+            start_step (int, optional): Включаемая начальная граница. None означает начало истории.
+            end_step (int, optional): Исключаемая конечная граница. None включает всю оставшуюся историю.
 
         Returns:
             dict[PathLike, list[Any]]: Словарь с путями и их историей значений
@@ -49,11 +51,12 @@ class StorageInterface:
     
     def read_time(self, start_step: int = None, end_step: int = None) -> list[float]:
         """
-        Чтение истории времени по шагам
+        Чтение истории времени по шагам.
+        Границы соответствуют срезу Python [start_step:end_step].
 
         Args:
-            start_step (int, optional): Начальный шаг для чтения времени. Defaults to None.
-            end_step (int, optional): Конечный шаг для чтения времени. Defaults to None.
+            start_step (int, optional): Включаемая начальная граница. None означает начало истории.
+            end_step (int, optional): Исключаемая конечная граница. None включает всю оставшуюся историю.
 
         Returns:
             list[float]: Список временных меток для каждого шага
@@ -125,20 +128,19 @@ class MemoryStorage(StorageInterface):
             
     def read_history(self, path: list[PathLike], start_step: int = 0, end_step: int = None) -> tuple[dict[PathLike, list[Any]], list[float]]:
         """
-        Считывает историю изменений значений для выбранных параметров
+        Считывает историю изменений значений для выбранных параметров.
+        Границы соответствуют срезу Python [start_step:end_step], включая отрицательные индексы.
+        Без границ возвращает все сохранённые шаги, включая начальный и текущий.
 
         Args:
             path (list[PathLike]): массив путей к параметрам, которые нужно прочесть
-            start_step (int, optional): С какого шага нужно начать чтение. Defaults to 0.
-            end_step (int, optional): Последний шаг для чтения истории. По умолчанию последняя запись
+            start_step (int, optional): Включаемая начальная граница. 0 или None означает начало истории.
+            end_step (int, optional): Исключаемая конечная граница. None включает всю оставшуюся историю.
 
         Returns:
             dict[PathLike, list[Any]]: словарь с историями массивов значений
             list[float]: массив временных меток
         """
-        if end_step is None:
-            end_step = self.step
-            
         path_strs = [path_to_str(p) for p in path]
         history = {}
         
@@ -150,22 +152,22 @@ class MemoryStorage(StorageInterface):
     
     def read_time(self, start_step: int = 0, end_step: int = None) -> list[float]:
         """
-        Чтение массива временных меток
+        Чтение массива временных меток.
+        Границы соответствуют срезу Python [start_step:end_step], включая отрицательные индексы.
+        Без границ возвращает все сохранённые шаги, включая начальный и текущий.
 
         Args:
-            start_step (int, optional): С какого шага нужно начать чтение. Defaults to 0.
-            end_step (int, optional): Последний шаг для чтения истории. По умолчанию последняя запись
+            start_step (int, optional): Включаемая начальная граница. 0 или None означает начало истории.
+            end_step (int, optional): Исключаемая конечная граница. None включает всю оставшуюся историю.
             
         Returns:
             list[float]: массив временных меток выбранного промежутка шагов
         """
-        if end_step is None:
-            end_step = self.step
         return self.time[start_step:end_step]
 
     def advance_step(self, time: float):        
         """
-        свинуть шаг  для меток хранилища.
+        сдвинуть шаг  для меток хранилища.
         Все параметры копируют предыдущее значение. Если новое не запишется, то останется таким.
 
         Args:

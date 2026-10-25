@@ -1,3 +1,4 @@
+
 from basics import Model, Parameter, MemoryStorage, Timer
 
 
@@ -54,3 +55,9 @@ storage.save_csv(path="example.csv")
 
 print(10*"=")
 print(model["param_in"].path)
+
+print(f"История выхода: {model.history.param_out}")
+print(f"Последние три значения: {model.history.param_out[-3:]}")
+print(f"Временные метки: {model.history.time}")
+print(f"История подмодели: {model.sub_model.history.param_out}")
+print(f"История входа на шагах 1–3: {model.read_history('param_in', 1, 4)}")
