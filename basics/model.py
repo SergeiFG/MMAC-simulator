@@ -1,6 +1,10 @@
 from basics.parameter import Parameter, PathLike, path_to_str, path_to_list, Timer
 from basics.storage import StorageInterface
 
+from typing import List
+
+
+
 class Model:
     
     def __init__(self, name:str = "", parameters: dict[str, Parameter] = {}, timer: Timer = None):
@@ -25,7 +29,7 @@ class Model:
             _type_: value параметра, если он является экземпляром Parameter, иначе возвращает сам объект
         """
         if isinstance(self.__dict__[key], Parameter):
-            return self.__dict__[key].value
+            return self.__dict__[key]
         if key == "time":
             return self.timer.time if self.timer else None
         return self.__dict__[key]
@@ -129,6 +133,19 @@ class Model:
         for param_name, param in self.__dict__.items():
             if isinstance(param, Model):
                 param.read_parameters()
+                
+    def read_history(self, param: Parameter) -> List[float]:
+        """
+        _summary_
+
+        Args:
+            param (Parameter): Параметер, который необходимо считать историю
+
+        Returns:
+            List[float]: _description_
+        """
+        
+        return None
                 
     def write_parameters(self):
         """

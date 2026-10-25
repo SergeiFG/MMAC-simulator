@@ -88,15 +88,18 @@ class Timer:
         """
         self.time = time
         
-    def __call__(self, delta_time: float,*args, **kwargs) -> None:
+        
+    def advance(self, delta_time: float) -> None:
         """
         Сдвигает время симуляции
 
         Args:
             delta_time (float): Дельта времени для следующего шага
         """
-        self.time += delta_time
+        if delta_time <= 0:
+            raise ValueError(f"Время между шагами симуляции должно быть больше 0, получено = {delta_time}")
         
+        self.time += delta_time
     
         
 if __name__ == "__main__":

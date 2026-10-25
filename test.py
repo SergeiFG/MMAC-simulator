@@ -14,7 +14,7 @@ class TestModel(Model):
         super().__init__(name, parameters, timer)
         self.param_out = Parameter(value=0, read=False)
         self.param_in = Parameter(value=0, read=True, read_path="Model.param_out")
-        self.param_delta = Parameter(value=2, read=False)
+        self.param_delta = Parameter(value=2, read=False, limits=(0, 10))
         self.param_out2 = Parameter(read = False)
         self.sub_model = SubModel()
 
@@ -35,7 +35,7 @@ model.inherit_path()
 model.advance()
 model.param_delta = 3
 for i in range(5):
-    timer(delta_time= 1)
+    timer.advance(delta_time= 1)
     storage.advance_step(timer.time)
     model.advance()
 
@@ -51,3 +51,6 @@ print(storage.time)
 print(storage.step)
 
 storage.save_csv(path="example.csv")
+
+print(10*"=")
+print(model["param_in"].path)
